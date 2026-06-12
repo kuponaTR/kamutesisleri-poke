@@ -1,0 +1,11 @@
+# Yerel geliştirme için .dev.vars adıyla kopyalayıp doldurun (git'e GİRMEZ).
+# Production'da aynı anahtarlar `npx wrangler secret put <AD>` ile yüklenir.
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GOOGLE_REFRESH_TOKEN=
+NOTION_API_KEY=
+MCP_API_KEY=
+# Opsiyonel:
+META_ACCESS_TOKEN=
+INSTAGRAM_BUSINESS_ACCOUNT_ID=
+POKE_API_KEY=

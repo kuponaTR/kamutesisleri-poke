@@ -1,0 +1,37 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "kamutesisleri-poke-mcp",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-09-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["KamuTesisleriMCP"]
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "class_name": "KamuTesisleriMCP",
+        "name": "MCP_OBJECT"
+      }
+    ]
+  },
+  "observability": {
+    "enabled": true
+  },
+  // Her gün 05:30 UTC (08:30 İstanbul) otomatik tam senkronizasyon
+  "triggers": {
+    "crons": ["30 5 * * *"]
+  },
+  // Gizli olmayan yapılandırma. Gizli değerler `wrangler secret put` ile yüklenir:
+  // GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN,
+  // NOTION_API_KEY, MCP_API_KEY, (opsiyonel) META_ACCESS_TOKEN, POKE_API_KEY
+  "vars": {
+    "SITE_URL": "https://www.kamutesisleri.com",
+    "GA4_PROPERTY_ID": "514182516",
+    "NOTION_DATABASE_ID": "326a5e0ec18741769897a7739f9f49f5",
+    "ADMOB_PUBLISHER_ID": "pub-1301913608701632"
+  }
+}
