@@ -1,0 +1,21 @@
+{
+  "name": "poke-integration-kamutesisleri",
+  "version": "0.1.0",
+  "description": "Poke-compatible scanner that scrapes kamutesisleri.com, fetches GA4/AdSense/Instagram data and saves results to Notion",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "scan": "node src/index.js scan",
+    "notion-test": "node src/index.js notion-test"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@notionhq/client": "^2.2.0",
+    "googleapis": "^140.0.0",
+    "node-fetch": "^2.6.7",
+    "cheerio": "^1.0.0-rc.12",
+    "dotenv": "^16.0.0"
+  }
+}
