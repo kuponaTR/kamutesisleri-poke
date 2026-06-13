@@ -25,6 +25,7 @@ const SCOPES = [
   "https://www.googleapis.com/auth/analytics.readonly",
   "https://www.googleapis.com/auth/adsense.readonly",
   "https://www.googleapis.com/auth/admob.readonly",
+  "https://www.googleapis.com/auth/webmasters.readonly",
 ].join(" ");
 
 const authUrl =

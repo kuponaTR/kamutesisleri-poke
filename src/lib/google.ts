@@ -5,11 +5,20 @@ const SCOPE_HELP =
   "`npm run get-refresh-token` ile analytics.readonly + adsense.readonly + admob.readonly " +
   "kapsamlarını içeren yeni bir token üretip GOOGLE_REFRESH_TOKEN secret'ını güncelleyin.";
 
-let cachedToken: { token: string; expiresAt: number } | null = null;
+// Refresh token başına access token önbelleği. GA4/AdSense/AdMob ile Search Console
+// farklı Google hesaplarında olduğu için birden fazla refresh token kullanılır.
+const tokenCache = new Map<string, { token: string; expiresAt: number }>();
 
-export async function getAccessToken(env: Env): Promise<string> {
-  if (cachedToken && Date.now() < cachedToken.expiresAt - 60_000) {
-    return cachedToken.token;
+/**
+ * Verilen refresh token için access token döndürür (varsayılan: GOOGLE_REFRESH_TOKEN).
+ * Search Console gibi farklı hesaptaki API'ler için ikinci token geçilebilir.
+ */
+export async function getAccessToken(env: Env, refreshToken?: string): Promise<string> {
+  const rt = refreshToken ?? env.GOOGLE_REFRESH_TOKEN;
+  if (!rt) throw new Error("Refresh token tanımlı değil.");
+  const cached = tokenCache.get(rt);
+  if (cached && Date.now() < cached.expiresAt - 60_000) {
+    return cached.token;
   }
   const res = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
@@ -17,7 +26,7 @@ export async function getAccessToken(env: Env): Promise<string> {
     body: new URLSearchParams({
       client_id: env.GOOGLE_CLIENT_ID,
       client_secret: env.GOOGLE_CLIENT_SECRET,
-      refresh_token: env.GOOGLE_REFRESH_TOKEN,
+      refresh_token: rt,
       grant_type: "refresh_token",
     }),
   });
@@ -32,15 +41,20 @@ export async function getAccessToken(env: Env): Promise<string> {
       `Google access token alınamadı: ${data.error ?? res.status} ${data.error_description ?? ""}`
     );
   }
-  cachedToken = {
+  tokenCache.set(rt, {
     token: data.access_token,
     expiresAt: Date.now() + (data.expires_in ?? 3600) * 1000,
-  };
+  });
   return data.access_token;
 }
 
-async function googleJson<T>(env: Env, url: string, init?: RequestInit): Promise<T> {
-  const token = await getAccessToken(env);
+async function googleJson<T>(
+  env: Env,
+  url: string,
+  init?: RequestInit,
+  refreshToken?: string
+): Promise<T> {
+  const token = await getAccessToken(env, refreshToken);
   const res = await fetch(url, {
     ...init,
     headers: {
@@ -213,4 +227,72 @@ export async function getAdmobReport(
     summary.adRequests += Number(values.AD_REQUESTS?.integerValue ?? 0);
   }
   return summary;
+}
+
+// ---------------------------------------------------------------- Search Console
+
+export interface SearchConsoleRow {
+  key: string;
+  clicks: number;
+  impressions: number;
+  ctr: number;
+  position: number;
+}
+
+export interface SearchConsoleReport {
+  startDate: string;
+  endDate: string;
+  dimension: string;
+  totals: { clicks: number; impressions: number };
+  rows: SearchConsoleRow[];
+}
+
+/** Search Console API yanıtını sade biçime çevirir; ctr'yi yüzdeye, position'ı 1 ondalığa yuvarlar. */
+export function mapSearchConsole(
+  api: any,
+  dimension: string
+): Pick<SearchConsoleReport, "dimension" | "totals" | "rows"> {
+  const rows: SearchConsoleRow[] = (api.rows ?? []).map((r: any) => ({
+    key: r.keys?.[0] ?? "",
+    clicks: r.clicks ?? 0,
+    impressions: r.impressions ?? 0,
+    ctr: Math.round((r.ctr ?? 0) * 1000) / 10,
+    position: Math.round((r.position ?? 0) * 10) / 10,
+  }));
+  const totals = rows.reduce(
+    (a, r) => ({ clicks: a.clicks + r.clicks, impressions: a.impressions + r.impressions }),
+    { clicks: 0, impressions: 0 }
+  );
+  return { dimension, totals, rows };
+}
+
+function dateNDaysAgo(n: number): string {
+  return new Date(Date.now() - n * 86_400_000).toISOString().slice(0, 10);
+}
+
+export async function getSearchConsoleReport(
+  env: Env,
+  startDate?: string,
+  endDate?: string,
+  dimension = "query",
+  rowLimit = 10
+): Promise<SearchConsoleReport> {
+  if (!env.GOOGLE_REFRESH_TOKEN_GSC) {
+    throw new Error(
+      "Search Console yapılandırılmamış: GOOGLE_REFRESH_TOKEN_GSC secret'ı (burakbastemur@gmail.com hesabı) ve GSC_SITE_URL gerekli."
+    );
+  }
+  const start = startDate ?? dateNDaysAgo(28);
+  const end = endDate ?? dateNDaysAgo(1);
+  const site = encodeURIComponent(env.GSC_SITE_URL);
+  const data = await googleJson<any>(
+    env,
+    `https://searchconsole.googleapis.com/webmasters/v3/sites/${site}/searchAnalytics/query`,
+    {
+      method: "POST",
+      body: JSON.stringify({ startDate: start, endDate: end, dimensions: [dimension], rowLimit }),
+    },
+    env.GOOGLE_REFRESH_TOKEN_GSC
+  );
+  return { startDate: start, endDate: end, ...mapSearchConsole(data, dimension) };
 }

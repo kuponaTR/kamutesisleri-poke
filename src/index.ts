@@ -2,7 +2,7 @@ import { McpAgent } from "agents/mcp";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { Env } from "./types";
-import { getGa4Report, getAdsenseReport, getAdmobReport } from "./lib/google";
+import { getGa4Report, getAdsenseReport, getAdmobReport, getSearchConsoleReport } from "./lib/google";
 import { scanWebsite } from "./lib/scanner";
 import { getInstagramInsights, getInstagramPosts, getFacebookPageInsights } from "./lib/meta";
 import { getSocialGrowth } from "./lib/growth";
@@ -97,6 +97,29 @@ export class KamuTesisleriMCP extends McpAgent<Env> {
       async () => {
         try {
           return text(await getInstagramInsights(this.env));
+        } catch (err) {
+          return errorText(err);
+        }
+      }
+    );
+
+    this.server.tool(
+      "get_search_console_report",
+      "Google Search Console raporu: verilen tarih aralığında toplam tıklama/gösterim/CTR/ortalama pozisyon + boyuta göre (query/page/country/device) ilk N satır.",
+      {
+        startDate: z.string().optional().describe("YYYY-MM-DD, varsayılan: 28 gün önce"),
+        endDate: z.string().optional().describe("YYYY-MM-DD, varsayılan: dün"),
+        dimension: z
+          .enum(["query", "page", "country", "device"])
+          .optional()
+          .describe("Varsayılan: query"),
+        rowLimit: z.number().int().min(1).max(25).optional().describe("Varsayılan: 10"),
+      },
+      async ({ startDate, endDate, dimension, rowLimit }) => {
+        try {
+          return text(
+            await getSearchConsoleReport(this.env, startDate, endDate, dimension ?? "query", rowLimit ?? 10)
+          );
         } catch (err) {
           return errorText(err);
         }

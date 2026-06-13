@@ -11,6 +11,8 @@ export interface Env {
   GOOGLE_CLIENT_ID: string;
   GOOGLE_CLIENT_SECRET: string;
   GOOGLE_REFRESH_TOKEN: string;
+  /** Search Console farklı Google hesabında (burakbastemur@gmail.com) olduğu için ayrı token. */
+  GOOGLE_REFRESH_TOKEN_GSC?: string;
   NOTION_API_KEY: string;
   /** Poke entegrasyonunun bu sunucuya bağlanırken kullanacağı API anahtarı */
   MCP_API_KEY: string;

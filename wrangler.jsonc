@@ -26,14 +26,15 @@
     "crons": ["30 5 * * *"]
   },
   // Gizli olmayan yapılandırma. Gizli değerler `wrangler secret put` ile yüklenir:
-  // GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN,
-  // NOTION_API_KEY, MCP_API_KEY, (opsiyonel) META_ACCESS_TOKEN, POKE_API_KEY
+  // GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN (GA4/AdSense/AdMob, info@kupona.com.tr),
+  // GOOGLE_REFRESH_TOKEN_GSC (Search Console, burakbastemur@gmail.com),
+  // NOTION_API_KEY, MCP_API_KEY, META_ACCESS_TOKEN (IG+FB page token), INSTAGRAM_BUSINESS_ACCOUNT_ID, POKE_API_KEY
   "vars": {
     "SITE_URL": "https://www.kamutesisleri.com",
     "GA4_PROPERTY_ID": "514182516",
     "NOTION_DATABASE_ID": "326a5e0ec18741769897a7739f9f49f5",
     "ADMOB_PUBLISHER_ID": "pub-1301913608701632",
     "FB_PAGE_ID": "1004566529413415",
-    "GSC_SITE_URL": ""
+    "GSC_SITE_URL": "sc-domain:kamutesisleri.com"
   }
 }
