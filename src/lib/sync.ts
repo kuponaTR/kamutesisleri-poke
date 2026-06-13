@@ -4,8 +4,8 @@ import { getGa4Report, getAdsenseReport, getAdmobReport } from "./google";
 import type { Ga4Summary, AdsenseSummary, AdmobSummary } from "./google";
 import { scanWebsite } from "./scanner";
 import type { ScanResult } from "./scanner";
-import { getInstagramInsights } from "./meta";
-import type { InstagramSummary } from "./meta";
+import { getInstagramInsights, getFacebookPageInsights } from "./meta";
+import type { InstagramSummary, FacebookPageSummary } from "./meta";
 import { createStatsRecord } from "./notion";
 
 export interface FullSyncResult {
@@ -15,16 +15,18 @@ export interface FullSyncResult {
   adsense: ToolResult<AdsenseSummary>;
   admob: ToolResult<AdmobSummary>;
   instagram: ToolResult<InstagramSummary>;
+  facebook: ToolResult<FacebookPageSummary>;
   notion: ToolResult<{ pageId: string; url: string }> | { ok: false; error: "dry-run" };
 }
 
 export async function runFullSync(env: Env, dryRun = false): Promise<FullSyncResult> {
-  const [scan, ga4, adsense, admob, instagram] = await Promise.all([
+  const [scan, ga4, adsense, admob, instagram, facebook] = await Promise.all([
     tryCall(() => scanWebsite(env.SITE_URL)),
     tryCall(() => getGa4Report(env)),
     tryCall(() => getAdsenseReport(env, "TODAY")),
     tryCall(() => getAdmobReport(env)),
     tryCall(() => getInstagramInsights(env)),
+    tryCall(() => getFacebookPageInsights(env)),
   ]);
 
   const date = new Date().toISOString().slice(0, 10);
@@ -43,6 +45,8 @@ export async function runFullSync(env: Env, dryRun = false): Promise<FullSyncRes
   if (!admob.ok) noteParts.push(`AdMob hatası: ${admob.error}`);
   if (instagram.ok)
     noteParts.push(`Instagram @${instagram.data.username}: ${instagram.data.followersCount} takipçi`);
+  if (facebook.ok)
+    noteParts.push(`Facebook ${facebook.data.page}: ${facebook.data.followers} takipçi`);
 
   const adsenseToday = adsense.ok ? adsense.data.estimatedEarnings : undefined;
   const admobToday = admob.ok ? admob.data.estimatedEarnings : undefined;
@@ -61,12 +65,15 @@ export async function runFullSync(env: Env, dryRun = false): Promise<FullSyncRes
           ziyaretciSayfaGoruntuleme: ga4.ok ? ga4.data.pageViews : undefined,
           adsenseToday,
           admobToday,
+          igFollowers: instagram.ok ? instagram.data.followersCount : undefined,
+          igReach: instagram.ok ? (instagram.data.reachLastDay ?? undefined) : undefined,
+          fbFollowers: facebook.ok ? facebook.data.followers : undefined,
           kazanc,
           note: noteParts.join("\n"),
         })
       );
 
-  return { date, scan, ga4, adsense, admob, instagram, notion };
+  return { date, scan, ga4, adsense, admob, instagram, facebook, notion };
 }
 
 /** Cron sonrası Poke'a kısa özet mesajı gönderir (POKE_API_KEY tanımlıysa) */
@@ -79,6 +86,7 @@ export async function notifyPoke(env: Env, result: FullSyncResult): Promise<void
       : `GA4 alınamadı: ${result.ga4.error}`,
     result.admob.ok ? `AdMob: ${result.admob.data.estimatedEarnings.toFixed(2)} TRY.` : null,
     result.adsense.ok ? `AdSense: ${result.adsense.data.estimatedEarnings.toFixed(2)} TRY.` : null,
+    result.instagram.ok ? `Instagram: ${result.instagram.data.followersCount} takipçi.` : null,
     result.notion.ok ? `Notion kaydı oluşturuldu: ${result.notion.data.url}` : `Notion kaydı oluşturulamadı.`,
   ].filter(Boolean);
 

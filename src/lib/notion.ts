@@ -34,6 +34,9 @@ export interface StatsRecord {
   kazanc?: number;
   adsenseToday?: number;
   admobToday?: number;
+  igFollowers?: number;
+  igReach?: number;
+  fbFollowers?: number;
   kitleSegment?: string;
   sehirler?: string[];
   cihaz?: string;
@@ -56,6 +59,9 @@ export async function createStatsRecord(
   if (record.kazanc != null) properties["Kazanç"] = { number: record.kazanc };
   if (record.adsenseToday != null) properties["AdSense Today"] = { number: record.adsenseToday };
   if (record.admobToday != null) properties["AdMob Today"] = { number: record.admobToday };
+  if (record.igFollowers != null) properties["IG Takipçi"] = { number: record.igFollowers };
+  if (record.igReach != null) properties["IG Reach"] = { number: record.igReach };
+  if (record.fbFollowers != null) properties["FB Takipçi"] = { number: record.fbFollowers };
   if (record.kitleSegment) properties["Kitle / Segment"] = { select: { name: record.kitleSegment } };
   if (record.sehirler?.length)
     properties["Şehir"] = { multi_select: record.sehirler.map((name) => ({ name })) };
