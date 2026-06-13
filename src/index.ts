@@ -4,7 +4,8 @@ import { z } from "zod";
 import type { Env } from "./types";
 import { getGa4Report, getAdsenseReport, getAdmobReport } from "./lib/google";
 import { scanWebsite } from "./lib/scanner";
-import { getInstagramInsights } from "./lib/meta";
+import { getInstagramInsights, getInstagramPosts, getFacebookPageInsights } from "./lib/meta";
+import { getSocialGrowth } from "./lib/growth";
 import { createStatsRecord, getRecentRecords } from "./lib/notion";
 import { runFullSync, notifyPoke } from "./lib/sync";
 
@@ -96,6 +97,45 @@ export class KamuTesisleriMCP extends McpAgent<Env> {
       async () => {
         try {
           return text(await getInstagramInsights(this.env));
+        } catch (err) {
+          return errorText(err);
+        }
+      }
+    );
+
+    this.server.tool(
+      "get_instagram_posts",
+      "Instagram son gönderilerinin performansı: beğeni, yorum, kaydetme, reach ve engagement oranı; en iyi 3 gönderi ve paylaşım saati/günü dağılımı.",
+      { limit: z.number().int().min(1).max(25).optional().describe("Kaç gönderi, varsayılan 12") },
+      async ({ limit }) => {
+        try {
+          return text(await getInstagramPosts(this.env, limit ?? 12));
+        } catch (err) {
+          return errorText(err);
+        }
+      }
+    );
+
+    this.server.tool(
+      "get_facebook_page_insights",
+      "Facebook sayfası özeti: takipçi sayısı, sayfa erişimi (impressions) ve etkileşim. Dönem: day, week veya days_28.",
+      { period: z.enum(["day", "week", "days_28"]).optional().describe("Varsayılan: week") },
+      async ({ period }) => {
+        try {
+          return text(await getFacebookPageInsights(this.env, period ?? "week"));
+        } catch (err) {
+          return errorText(err);
+        }
+      }
+    );
+
+    this.server.tool(
+      "get_social_growth",
+      "Sosyal medya büyüme trendi: Notion'daki günlük kayıtlardan IG takipçi, IG reach ve FB takipçi sayısının dönemsel mutlak ve yüzde değişimi.",
+      { days: z.number().int().min(1).max(90).optional().describe("Geriye bakış (gün), varsayılan 7") },
+      async ({ days }) => {
+        try {
+          return text(await getSocialGrowth(this.env, days ?? 7));
         } catch (err) {
           return errorText(err);
         }
