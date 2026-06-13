@@ -125,6 +125,27 @@ export async function getGa4Report(
   };
 }
 
+/** Son `days` günün günlük aktif kullanıcı serisi (tarihe göre artan). Anomali tespiti için. */
+export async function getGa4DailyUsers(
+  env: Env,
+  days = 8
+): Promise<{ date: string; activeUsers: number }[]> {
+  const base = `https://analyticsdata.googleapis.com/v1beta/properties/${env.GA4_PROPERTY_ID}:runReport`;
+  const data = await googleJson<any>(env, base, {
+    method: "POST",
+    body: JSON.stringify({
+      dateRanges: [{ startDate: `${days}daysAgo`, endDate: "yesterday" }],
+      dimensions: [{ name: "date" }],
+      metrics: [{ name: "activeUsers" }],
+      orderBys: [{ dimension: { dimensionName: "date" } }],
+    }),
+  });
+  return (data.rows ?? []).map((r: any) => ({
+    date: r.dimensionValues[0].value,
+    activeUsers: Number(r.metricValues[0].value ?? 0),
+  }));
+}
+
 // ---------------------------------------------------------------- AdSense
 
 export type AdsenseDateRange =
