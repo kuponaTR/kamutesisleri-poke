@@ -4,8 +4,8 @@ import { getGa4Report, getAdsenseReport, getAdmobReport } from "./google";
 import type { Ga4Summary, AdsenseSummary, AdmobSummary } from "./google";
 import { scanWebsite } from "./scanner";
 import type { ScanResult } from "./scanner";
-import { getInstagramInsights } from "./instagram";
-import type { InstagramSummary } from "./instagram";
+import { getInstagramInsights } from "./meta";
+import type { InstagramSummary } from "./meta";
 import { createStatsRecord } from "./notion";
 
 export interface FullSyncResult {

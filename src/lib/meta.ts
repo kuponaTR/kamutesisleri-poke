@@ -1,5 +1,18 @@
 import type { Env } from "../types";
 
+const GRAPH = "https://graph.facebook.com/v21.0";
+
+async function metaGet(env: Env, path: string, params: Record<string, string>): Promise<any> {
+  if (!env.META_ACCESS_TOKEN) throw new Error("META_ACCESS_TOKEN tanımlı değil.");
+  const qs = new URLSearchParams({ ...params, access_token: env.META_ACCESS_TOKEN });
+  const res = await fetch(`${GRAPH}/${path}?${qs}`);
+  const body = (await res.json()) as any;
+  if (!res.ok) {
+    throw new Error(`Meta API hatası ${res.status}: ${body?.error?.message ?? JSON.stringify(body)}`);
+  }
+  return body;
+}
+
 export interface InstagramSummary {
   username: string;
   followersCount: number;

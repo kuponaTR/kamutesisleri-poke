@@ -4,7 +4,7 @@ import { z } from "zod";
 import type { Env } from "./types";
 import { getGa4Report, getAdsenseReport, getAdmobReport } from "./lib/google";
 import { scanWebsite } from "./lib/scanner";
-import { getInstagramInsights } from "./lib/instagram";
+import { getInstagramInsights } from "./lib/meta";
 import { createStatsRecord, getRecentRecords } from "./lib/notion";
 import { runFullSync, notifyPoke } from "./lib/sync";
 
