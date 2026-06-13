@@ -7,7 +7,10 @@ import { scanWebsite } from "./lib/scanner";
 import { getInstagramInsights, getInstagramPosts, getFacebookPageInsights } from "./lib/meta";
 import { getSocialGrowth } from "./lib/growth";
 import { createStatsRecord, getRecentRecords } from "./lib/notion";
-import { runFullSync, notifyPoke } from "./lib/sync";
+import { runFullSync } from "./lib/sync";
+import { buildDigest } from "./lib/digest";
+import { runUptimeCheck, runDailyAlerts } from "./lib/alerts";
+import { sendPoke } from "./lib/poke";
 
 function text(data: unknown) {
   return { content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }] };
@@ -204,6 +207,19 @@ export class KamuTesisleriMCP extends McpAgent<Env> {
     );
 
     this.server.tool(
+      "get_digest",
+      "Günlük akıllı özet: GA4 trafiği (7g ort. trendi), AdSense+AdMob kazancı, Search Console haftalık tıklama + top sorgu, Instagram takipçi/reach büyümesi — tek mesajda.",
+      {},
+      async () => {
+        try {
+          return text(await buildDigest(this.env));
+        } catch (err) {
+          return errorText(err);
+        }
+      }
+    );
+
+    this.server.tool(
       "run_full_sync",
       "Tam senkronizasyon: site taraması + GA4 + AdSense + AdMob + Instagram verilerini toplar ve Notion'a günlük özet kaydı ekler. dryRun=true ise Notion'a yazmaz, sadece raporlar.",
       { dryRun: z.boolean().optional().describe("true ise Notion'a yazılmaz") },
@@ -250,9 +266,21 @@ export default {
     return new Response("Not found", { status: 404 });
   },
 
-  async scheduled(_event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
+  async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
+    // 15 dk'lık hafif uptime kontrolü
+    if (event.cron === "*/15 * * * *") {
+      ctx.waitUntil(runUptimeCheck(env));
+      return;
+    }
+    // Günlük (05:30 UTC): tam senkronizasyon + akıllı özet + trafik/SEO uyarıları
     ctx.waitUntil(
-      runFullSync(env).then((result) => notifyPoke(env, result))
+      (async () => {
+        await runFullSync(env);
+        const digest = await buildDigest(env);
+        await sendPoke(env, digest.message);
+        const alerts = await runDailyAlerts(env);
+        if (alerts.length) await sendPoke(env, alerts.join("\n"));
+      })()
     );
   },
 };

@@ -76,26 +76,3 @@ export async function runFullSync(env: Env, dryRun = false): Promise<FullSyncRes
   return { date, scan, ga4, adsense, admob, instagram, facebook, notion };
 }
 
-/** Cron sonrası Poke'a kısa özet mesajı gönderir (POKE_API_KEY tanımlıysa) */
-export async function notifyPoke(env: Env, result: FullSyncResult): Promise<void> {
-  if (!env.POKE_API_KEY) return;
-  const lines = [
-    `kamutesisleri.com günlük otomatik senkronizasyon tamamlandı (${result.date}).`,
-    result.ga4.ok
-      ? `GA4: ${result.ga4.data.activeUsers} aktif kullanıcı, ${result.ga4.data.pageViews} görüntüleme.`
-      : `GA4 alınamadı: ${result.ga4.error}`,
-    result.admob.ok ? `AdMob: ${result.admob.data.estimatedEarnings.toFixed(2)} TRY.` : null,
-    result.adsense.ok ? `AdSense: ${result.adsense.data.estimatedEarnings.toFixed(2)} TRY.` : null,
-    result.instagram.ok ? `Instagram: ${result.instagram.data.followersCount} takipçi.` : null,
-    result.notion.ok ? `Notion kaydı oluşturuldu: ${result.notion.data.url}` : `Notion kaydı oluşturulamadı.`,
-  ].filter(Boolean);
-
-  await fetch("https://poke.com/api/v1/inbound/api-message", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${env.POKE_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ message: lines.join(" ") }),
-  });
-}
