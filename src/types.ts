@@ -4,6 +4,8 @@ export interface Env {
   GA4_PROPERTY_ID: string;
   NOTION_DATABASE_ID: string;
   ADMOB_PUBLISHER_ID: string;
+  FB_PAGE_ID: string;
+  GSC_SITE_URL: string;
 
   // wrangler secret put ile yüklenen gizli değerler
   GOOGLE_CLIENT_ID: string;

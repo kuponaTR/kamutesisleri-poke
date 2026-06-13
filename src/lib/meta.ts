@@ -155,3 +155,39 @@ export async function getInstagramPosts(env: Env, limit = 12): Promise<Instagram
     postingTimes: analyzePostingTimes(posts),
   };
 }
+
+export interface FacebookPageSummary {
+  page: string;
+  followers: number;
+  reach: number;
+  engagements: number;
+  period: string;
+}
+
+export async function getFacebookPageInsights(env: Env, period = "week"): Promise<FacebookPageSummary> {
+  const pid = env.FB_PAGE_ID;
+  if (!pid) throw new Error("FB_PAGE_ID tanımlı değil.");
+  const prof = await metaGet(env, pid, { fields: "name,followers_count,fan_count" });
+  let reach = 0;
+  let engagements = 0;
+  try {
+    const ins = await metaGet(env, `${pid}/insights`, {
+      metric: "page_impressions_unique,page_post_engagements",
+      period,
+    });
+    for (const d of ins.data ?? []) {
+      const v = d.values?.at(-1)?.value ?? 0;
+      if (d.name === "page_impressions_unique") reach = v;
+      else if (d.name === "page_post_engagements") engagements = v;
+    }
+  } catch {
+    // Sayfa insights metrikleri sürüm/izin bağımlı; gracefully 0 bırak.
+  }
+  return {
+    page: prof.name,
+    followers: prof.followers_count ?? prof.fan_count ?? 0,
+    reach,
+    engagements,
+    period,
+  };
+}
