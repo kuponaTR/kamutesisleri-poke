@@ -13,6 +13,17 @@ async function metaGet(env: Env, path: string, params: Record<string, string>): 
   return body;
 }
 
+/** Etkileşim oranı (%): (beğeni+yorum+kaydetme)/reach * 100, bir ondalık. */
+export function computeEngagementRate(
+  likes: number,
+  comments: number,
+  saved: number,
+  reach: number
+): number {
+  if (!reach) return 0;
+  return Math.round(((likes + comments + saved) / reach) * 1000) / 10;
+}
+
 export interface InstagramSummary {
   username: string;
   followersCount: number;
