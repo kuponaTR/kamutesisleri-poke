@@ -24,6 +24,25 @@ export function computeEngagementRate(
   return Math.round(((likes + comments + saved) / reach) * 1000) / 10;
 }
 
+const WEEKDAYS = ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"];
+
+/** Gönderi timestamp'lerinden haftanın günü ve saat (UTC) dağılımı çıkarır. */
+export function analyzePostingTimes(posts: { timestamp: string }[]): {
+  byWeekday: Record<string, number>;
+  byHour: Record<string, number>;
+} {
+  const byWeekday: Record<string, number> = {};
+  const byHour: Record<string, number> = {};
+  for (const p of posts) {
+    const d = new Date(p.timestamp);
+    const wd = WEEKDAYS[d.getUTCDay()];
+    const hr = String(d.getUTCHours());
+    byWeekday[wd] = (byWeekday[wd] ?? 0) + 1;
+    byHour[hr] = (byHour[hr] ?? 0) + 1;
+  }
+  return { byWeekday, byHour };
+}
+
 export interface InstagramSummary {
   username: string;
   followersCount: number;
