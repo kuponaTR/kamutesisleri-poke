@@ -6,6 +6,9 @@ export interface Env {
   ADMOB_PUBLISHER_ID: string;
   FB_PAGE_ID: string;
   GSC_SITE_URL: string;
+  TRAFFIC_ANOMALY_PCT: string;
+  SEO_DROP_PCT: string;
+  SLOW_MS: string;
 
   // wrangler secret put ile yüklenen gizli değerler
   GOOGLE_CLIENT_ID: string;
@@ -24,6 +27,8 @@ export interface Env {
   POKE_API_KEY?: string;
 
   MCP_OBJECT: DurableObjectNamespace;
+  /** Uyarı durumu (uptime up/down) saklamak için KV. */
+  STATE: KVNamespace;
 }
 
 /** Araç sonuçlarının ortak zarfı: hata olsa bile akışı bozmadan raporlar */

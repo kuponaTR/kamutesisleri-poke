@@ -21,9 +21,17 @@
   "observability": {
     "enabled": true
   },
-  // Her gün 05:30 UTC (08:30 İstanbul) otomatik tam senkronizasyon
+  // Uyarı durum saklama (uptime up/down geçişi için)
+  "kv_namespaces": [
+    {
+      "binding": "STATE",
+      "id": "035dad90a10c4938959d4d7408163090"
+    }
+  ],
+  // 05:30 UTC: tam senkronizasyon + günlük akıllı özet + trafik/SEO uyarıları.
+  // Her 15 dk: hafif uptime kontrolü (site erişilemez/yavaş → durum değişiminde Poke uyarısı).
   "triggers": {
-    "crons": ["30 5 * * *"]
+    "crons": ["30 5 * * *", "*/15 * * * *"]
   },
   // Gizli olmayan yapılandırma. Gizli değerler `wrangler secret put` ile yüklenir:
   // GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN (GA4/AdSense/AdMob, info@kupona.com.tr),
@@ -35,6 +43,9 @@
     "NOTION_DATABASE_ID": "326a5e0ec18741769897a7739f9f49f5",
     "ADMOB_PUBLISHER_ID": "pub-1301913608701632",
     "FB_PAGE_ID": "1004566529413415",
-    "GSC_SITE_URL": "sc-domain:kamutesisleri.com"
+    "GSC_SITE_URL": "sc-domain:kamutesisleri.com",
+    "TRAFFIC_ANOMALY_PCT": "40",
+    "SEO_DROP_PCT": "30",
+    "SLOW_MS": "5000"
   }
 }
