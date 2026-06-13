@@ -63,6 +63,7 @@ const tests = [
   ["get_instagram_posts", { limit: 5 }],
   ["get_facebook_page_insights", {}],
   ["get_social_growth", { days: 7 }],
+  ["get_digest", {}],
   ["get_recent_notion_records", { limit: 2 }],
   ["run_full_sync", { dryRun: true }],
 ];
