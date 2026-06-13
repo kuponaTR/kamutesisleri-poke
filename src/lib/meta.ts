@@ -85,3 +85,73 @@ export async function getInstagramInsights(env: Env): Promise<InstagramSummary> 
     reachLastDay: reach,
   };
 }
+
+export interface InstagramPost {
+  permalink: string;
+  type: string;
+  timestamp: string;
+  caption: string;
+  likes: number;
+  comments: number;
+  saved: number;
+  reach: number;
+  engagementRate: number;
+}
+
+export interface InstagramPostsSummary {
+  account: string;
+  posts: InstagramPost[];
+  bestPosts: InstagramPost[];
+  postingTimes: ReturnType<typeof analyzePostingTimes>;
+}
+
+export async function getInstagramPosts(env: Env, limit = 12): Promise<InstagramPostsSummary> {
+  const ig = env.INSTAGRAM_BUSINESS_ACCOUNT_ID;
+  if (!ig) throw new Error("INSTAGRAM_BUSINESS_ACCOUNT_ID tanımlı değil.");
+
+  // Kullanıcı adı + medya listesi tek istekte
+  const root = await metaGet(env, ig, {
+    fields:
+      `username,media.limit(${limit}){id,caption,media_type,permalink,timestamp,like_count,comments_count}`,
+  });
+
+  const posts: InstagramPost[] = [];
+  for (const m of root.media?.data ?? []) {
+    let reach = 0;
+    let saved = 0;
+    try {
+      const ins = await metaGet(env, `${m.id}/insights`, { metric: "reach,saved" });
+      for (const d of ins.data ?? []) {
+        const v = d.values?.[0]?.value ?? 0;
+        if (d.name === "reach") reach = v;
+        else if (d.name === "saved") saved = v;
+      }
+    } catch {
+      // Bazı medya tiplerinde insights bulunmaz; atla.
+    }
+    const likes = m.like_count ?? 0;
+    const comments = m.comments_count ?? 0;
+    posts.push({
+      permalink: m.permalink,
+      type: m.media_type,
+      timestamp: m.timestamp,
+      caption: (m.caption ?? "").slice(0, 120),
+      likes,
+      comments,
+      saved,
+      reach,
+      engagementRate: computeEngagementRate(likes, comments, saved, reach),
+    });
+  }
+
+  const bestPosts = [...posts]
+    .sort((a, b) => b.engagementRate - a.engagementRate)
+    .slice(0, 3);
+
+  return {
+    account: root.username ?? "",
+    posts,
+    bestPosts,
+    postingTimes: analyzePostingTimes(posts),
+  };
+}
