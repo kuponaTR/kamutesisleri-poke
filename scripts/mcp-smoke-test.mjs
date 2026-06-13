@@ -59,6 +59,9 @@ const tests = [
   ["get_adsense_report", { dateRange: "LAST_7_DAYS" }],
   ["get_admob_report", {}],
   ["get_instagram_insights", {}],
+  ["get_instagram_posts", { limit: 5 }],
+  ["get_facebook_page_insights", {}],
+  ["get_social_growth", { days: 7 }],
   ["get_recent_notion_records", { limit: 2 }],
   ["run_full_sync", { dryRun: true }],
 ];
