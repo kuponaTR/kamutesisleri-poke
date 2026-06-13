@@ -58,6 +58,7 @@ const tests = [
   ["get_ga4_report", { startDate: "7daysAgo", endDate: "yesterday" }],
   ["get_adsense_report", { dateRange: "LAST_7_DAYS" }],
   ["get_admob_report", {}],
+  ["get_search_console_report", { dimension: "query", rowLimit: 5 }],
   ["get_instagram_insights", {}],
   ["get_instagram_posts", { limit: 5 }],
   ["get_facebook_page_insights", {}],
