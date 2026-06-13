@@ -101,6 +101,9 @@ export async function getRecentRecords(env: Env, limit = 10) {
       kazanc: p["Kazanç"]?.number ?? null,
       adsenseToday: p["AdSense Today"]?.number ?? null,
       admobToday: p["AdMob Today"]?.number ?? null,
+      igFollowers: p["IG Takipçi"]?.number ?? null,
+      igReach: p["IG Reach"]?.number ?? null,
+      fbFollowers: p["FB Takipçi"]?.number ?? null,
       url: page.url,
     };
   });
